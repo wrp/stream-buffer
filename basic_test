@@ -1,0 +1,9 @@
+#!/bin/sh
+
+make stream-buffer
+trap 'rm -f fifo' 0
+mkfifo fifo
+
+./stream-buffer 1000 < stream-buffer.c > fifo &
+./stream-buffer < fifo > output
+cmp output stream-buffer.c
