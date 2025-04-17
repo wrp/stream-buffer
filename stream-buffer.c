@@ -197,7 +197,7 @@ read_one_second(long long interval, struct ring_buf *rb)
 	long long count = 1e06 / interval + 1;
 	assert(interval > 0);
 	assert(interval < 1e06);
-	while (count > 0 && (c = getchar()) != EOF) {
+	while (count-- > 0 && (c = getchar()) != EOF) {
 		rb_xpush(rb, c);
 	}
 }
