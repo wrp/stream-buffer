@@ -32,7 +32,7 @@ char *msg[] = {
 sig_atomic_t received_signal;
 static int is_regular(int fd, const char *name);
 static void set_timer(long long value_usec, long long interval_usec);
-static void reset_timer(long long interval, float resize_factor);
+static long long reset_timer(long long interval, float resize_factor);
 
 static void
 stream_data(long long interval, struct ring_buf *rb)
@@ -47,7 +47,7 @@ stream_data(long long interval, struct ring_buf *rb)
 			int d;
 			bytes_buffered -= 1;
 			if( (d = rb_pop(rb)) == EOF ){
-				reset_timer(interval, 1.05);
+				interval = reset_timer(interval, 1.05);
 			} else {
 				putchar(d);
 				fflush(stdout);
@@ -60,11 +60,11 @@ stream_data(long long interval, struct ring_buf *rb)
 			rb_xpush(rb, c);
 		}
 		if( bytes_buffered > 1024 ){
-			reset_timer(interval, .95);
+			interval = reset_timer(interval, .95);
 			bytes_buffered = 0;
 		}
 		if( bytes_buffered < -1024 ){
-			reset_timer(interval, 1.05);
+			interval = reset_timer(interval, 1.05);
 			bytes_buffered = 0;
 		}
 	}
@@ -96,14 +96,14 @@ set_timer(long long value_usec, long long interval_usec)
 	setitimer(ITIMER_REAL, &t, NULL);
 }
 
-static void
+static long long
 reset_timer(long long interval, float resize_factor)
 {
 	if (is_regular(STDIN_FILENO, "stdin") ){
 		/* When the input stream is a regular file, we rely solely
 		 * on the command line argument to dictate the output rate
 		 * and do not adjust the timer. */
-		return;
+		return interval;
 	}
 	long long new_interval = interval * resize_factor;
 	if( new_interval < 10 ){
@@ -115,6 +115,7 @@ reset_timer(long long interval, float resize_factor)
 		exit(1);
 	}
 	set_timer(new_interval, new_interval);
+	return new_interval;
 }
 
 static void
