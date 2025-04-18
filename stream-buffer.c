@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include "ring-buffer.h"
 
+#define DELAY_SIZE 1024
+
 /*
  * Extremely naive stream buffering.  If an argument is given, it should
  * be an integer between 10 and 1000000, giving the number of microseconds
@@ -59,11 +61,11 @@ stream_data(long long interval, struct ring_buf *rb)
 			bytes_buffered += 1;
 			rb_xpush(rb, c);
 		}
-		if( bytes_buffered > 1024 ){
+		if( bytes_buffered > DELAY_SIZE ){
 			interval = reset_timer(interval, .95);
 			bytes_buffered = 0;
 		}
-		if( bytes_buffered < -1024 ){
+		if( bytes_buffered < -DELAY_SIZE ){
 			interval = reset_timer(interval, 1.05);
 			bytes_buffered = 0;
 		}
